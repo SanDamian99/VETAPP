@@ -1,0 +1,6 @@
+streamlit
+pandas
+google-generativeai
+requests
+urllib3
+google-api-core
