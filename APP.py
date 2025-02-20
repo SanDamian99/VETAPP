@@ -1,6 +1,8 @@
 import streamlit as st
 import os
 import re
+import time
+import tempfile
 import google.generativeai as genai
 from requests.exceptions import ConnectionError
 from urllib3.exceptions import ProtocolError
@@ -9,8 +11,8 @@ from google.api_core.exceptions import TooManyRequests
 # =================== Configuración de la API de Gemini ===================
 
 api_keys = [
-"AIzaSyC5oc1_9Zp0xb37z2u7M1v3ov4Js1DyUSk",
-"AIzaSyAEaxnxgoMXwg9YVRmRH_tKVGD3pNgHKkk"
+    "AIzaSyC5oc1_9Zp0xb37z2u7M1v3ov4Js1DyUSk",
+    "AIzaSyAEaxnxgoMXwg9YVRmRH_tKVGD3pNgHKkk"
 ]
 
 current_api_key_index = 0
@@ -36,9 +38,11 @@ safety_settings = [
 ]
 
 def create_model():
-    return genai.GenerativeModel(model_name="gemini-2.0-flash",
-                                 generation_config=generation_config,
-                                 safety_settings=safety_settings)
+    return genai.GenerativeModel(
+        model_name="gemini-2.0-flash",
+        generation_config=generation_config,
+        safety_settings=safety_settings
+    )
 
 model = create_model()
 
@@ -59,6 +63,31 @@ def send_prompt_to_gemini(prompt):
             return response.text.strip() if response and response.text else "Sin respuesta."
         except Exception as e:
             return "Error al procesar la solicitud."
+
+# ============ Funciones para subir el video a Gemini ============
+
+def upload_to_gemini(path, mime_type=None):
+    """
+    Sube el archivo dado a Gemini y retorna el objeto de archivo.
+    """
+    file = genai.upload_file(path, mime_type=mime_type)
+    st.write(f"Archivo '{file.display_name}' subido a: {file.uri}")
+    return file
+
+def wait_for_files_active(files):
+    """
+    Espera a que los archivos subidos estén activos.
+    Utiliza un spinner de Streamlit para mostrar el progreso.
+    """
+    with st.spinner("Esperando a que el archivo se procese..."):
+        for i, file in enumerate(files):
+            # Actualiza el estado del archivo en un bucle hasta que no esté en 'PROCESSING'
+            while file.state.name == "PROCESSING":
+                time.sleep(10)
+                file = genai.get_file(file.name)
+            if file.state.name != "ACTIVE":
+                raise Exception(f"El archivo {file.name} falló al procesarse")
+    st.success("El archivo ya está activo.")
 
 # =================== Inicio de la aplicación Streamlit ===================
 
@@ -100,6 +129,22 @@ else:
 # Opción para subir un video (opcional)
 video_file = st.file_uploader("Sube un video del animal (opcional)", type=["mp4", "mov", "avi"])
 
+video_uri = None
+if video_file is not None:
+    # Guardar el archivo subido en un archivo temporal
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_file:
+        temp_file.write(video_file.getvalue())
+        temp_file_path = temp_file.name
+    st.write(f"Video guardado temporalmente en: {temp_file_path}")
+    
+    # Subir el video a Gemini y esperar a que esté activo
+    try:
+        uploaded_video = upload_to_gemini(temp_file_path, mime_type="video/mp4")
+        wait_for_files_active([uploaded_video])
+        video_uri = uploaded_video.uri
+    except Exception as e:
+        st.error(f"Error al subir o procesar el video: {e}")
+
 # Botón para evaluar
 if st.button("Evaluar"):
     # Se compila un prompt con la información recopilada
@@ -126,7 +171,7 @@ if st.button("Evaluar"):
         prompt += f"- Se esconde: {ocultarse}\n"
         prompt += f"- Reacio a salir: {reacio}\n\n"
     
-    # Agregar criterios de evaluación (se pueden adaptar o ampliar según sea necesario)
+    # Agregar criterios de evaluación
     prompt += "Criterios para evaluar la información:\n"
     prompt += "Eyes: Are the eyes half-closed or narrowed? Is there any wrinkling around the eyes?\n"
     prompt += "Nose and Cheeks: Is the bridge of the nose flattened or elongated? Are the cheeks flattened or appear sunken?\n"
@@ -134,8 +179,8 @@ if st.button("Evaluar"):
     prompt += "Whiskers: Are the whiskers stiff and held close to the face? Are the whiskers clumped together? Have the whiskers lost their natural downward curve?\n"
     prompt += "Additional Considerations: Pain Assessment using a validated scale (e.g., Feline Grimace Scale for cats) and species-specific features.\n\n"
     
-    if video_file is not None:
-        prompt += "Se adjunta un video para análisis visual.\n"
+    if video_uri:
+        prompt += f"Video cargado: {video_uri}\n"
     
     prompt += "\n**Nota:** Esta información es analizada por una IA, la cual puede equivocarse. Ante cualquier duda, consulte a un veterinario."
     
