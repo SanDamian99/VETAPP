@@ -81,7 +81,6 @@ def wait_for_files_active(files):
     """
     with st.spinner("Esperando a que el archivo se procese..."):
         for i, file in enumerate(files):
-            # Actualiza el estado del archivo en un bucle hasta que no esté en 'PROCESSING'
             while file.state.name == "PROCESSING":
                 time.sleep(10)
                 file = genai.get_file(file.name)
@@ -117,6 +116,19 @@ if tipo_animal == "Gato":
     sociable = st.radio("¿El gato es sociable o tímido?", options=["Sociable", "Tímido"])
     ocultarse = st.radio("¿El gato se esconde o evita interactuar?", options=["Sí", "No"])
     reacio = st.radio("¿El gato se muestra reacio a salir incluso para ver a su persona favorita o recibir su comida?", options=["Sí", "No"])
+    
+    # Mostrar las imágenes para evaluar el estado general del gato
+    st.write("¿Cuál de estas imágenes se parece más al estado general de su gato en el último tiempo?")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.image("gato_normal.jpg", caption="Estado normal (orejas arriba, boca cerrada, ojos abiertos)")
+    with col2:
+        st.image("gato_dolor.jpg", caption="Estado con dolor (ojos cerrados, orejas caídas, boca abierta)")
+    
+    imagen_estado_gato = st.radio(
+        "Seleccione la imagen que más se parezca al estado de su gato:",
+        options=["Estado normal", "Estado con dolor"]
+    )
 else:
     st.subheader("Preguntas adicionales para perros")
     aseo_regular = st.radio("¿El perro se limpia o se lame regularmente?", options=["Sí", "No"])
@@ -161,7 +173,8 @@ if st.button("Evaluar"):
         prompt += f"- Cambio en comportamiento: {comportamiento_cambio}\n"
         prompt += f"- Sociabilidad: {sociable}\n"
         prompt += f"- Se esconde: {ocultarse}\n"
-        prompt += f"- Reacio a salir: {reacio}\n\n"
+        prompt += f"- Reacio a salir: {reacio}\n"
+        prompt += f"- Imagen que representa el estado general: {imagen_estado_gato}\n\n"
     else:
         prompt += "Preguntas específicas para perros:\n"
         prompt += f"- Se limpia o lame regularmente: {aseo_regular}\n"
@@ -180,7 +193,12 @@ if st.button("Evaluar"):
     prompt += "Additional Considerations: Pain Assessment using a validated scale (e.g., Feline Grimace Scale for cats) and species-specific features.\n\n"
     
     if video_uri:
-        prompt += f"Video cargado: {video_uri}\n"
+        prompt += f"Video cargado: {video_uri}\n\n"
+    
+    # Agregar indicaciones para un análisis más amable y cercano
+    prompt += ("Por favor, analiza toda la información proporcionada de forma precisa, pero respondiendo de manera amable y cercana. "
+               "Explique lo que se observa y brinde recomendaciones claras sobre qué acciones tomar, en un tono empático y comprensivo. "
+               "La respuesta debe ser detallada y profunda, sin perder la precisión en el análisis.\n")
     
     prompt += "\n**Nota:** Esta información es analizada por una IA, la cual puede equivocarse. Ante cualquier duda, consulte a un veterinario."
     
