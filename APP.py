@@ -121,9 +121,9 @@ if tipo_animal == "Gato":
     st.write("¿Cuál de estas imágenes se parece más al estado general de su gato en el último tiempo?")
     col1, col2 = st.columns(2)
     with col1:
-        st.image("gato_normal.jpg", caption="Estado normal (orejas arriba, boca cerrada, ojos abiertos)")
+        st.image("gato_normal.png", caption="Estado normal (orejas arriba, boca cerrada, ojos abiertos)")
     with col2:
-        st.image("gato_dolor.jpg", caption="Estado con dolor (ojos cerrados, orejas caídas, boca abierta)")
+        st.image("gato_dolor.png", caption="Estado con dolor (ojos cerrados, orejas caídas, boca abierta)")
     
     imagen_estado_gato = st.radio(
         "Seleccione la imagen que más se parezca al estado de su gato:",
