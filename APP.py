@@ -1,9 +1,10 @@
-
 import streamlit as st
 import os
 import re
 import time
 import tempfile
+import csv
+from datetime import datetime
 import google.generativeai as genai
 from requests.exceptions import ConnectionError
 from urllib3.exceptions import ProtocolError
@@ -89,6 +90,18 @@ def wait_for_files_active(files):
                 raise Exception(f"El archivo {file.name} falló al procesarse")
     st.success("El archivo ya está activo.")
 
+# ============ Función para guardar la respuesta en un archivo CSV ============
+CSV_FILE = "responses.csv"
+
+def save_response_to_csv(data):
+    file_exists = os.path.exists(CSV_FILE)
+    with open(CSV_FILE, mode='a', newline='', encoding='utf-8') as csvfile:
+        fieldnames = list(data.keys())
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(data)
+
 # =================== Inicio de la aplicación Streamlit ===================
 
 # Selección del idioma al inicio
@@ -100,7 +113,7 @@ if language == "English":
         """
         **Welcome!**  
         This application uses artificial intelligence to provide an initial evaluation of your pet's health.  
-        
+
         **How to use this application:**  
         1. **Select your language.**  
         2. **Enter your owner information:** Country, Owner's Name, Contact Number (with country code), and Email.  
@@ -110,7 +123,7 @@ if language == "English":
            - If yes, a warning will appear urging you to consult a veterinarian immediately.  
         6. **Optionally, upload a video** of your pet.  
         7. Click the **Evaluate** button to receive a detailed, empathetic analysis with clear recommendations.
-        
+
         **Note:** This is an initial assessment provided by an AI, which may not be entirely accurate. If in doubt, please consult a veterinarian.
         """
     )
@@ -174,7 +187,7 @@ else:
         """
         **¡Bienvenido!**  
         Esta aplicación utiliza inteligencia artificial para ofrecer una evaluación inicial de la salud de su mascota.  
-        
+
         **Cómo usar esta aplicación:**  
         1. **Seleccione el idioma.**  
         2. **Ingrese la información del dueño:** País, Nombre del dueño, Número de contacto (con indicativo del país) y Email.  
@@ -184,7 +197,7 @@ else:
            - Si responde que sí, se mostrará una advertencia para que consulte a un veterinario de inmediato.  
         6. **Opcionalmente, suba un video** de su mascota.  
         7. Presione el botón **Evaluar** para recibir un análisis detallado y empático del estado de su mascota con recomendaciones claras.
-        
+
         **Nota:** Esta es una evaluación inicial proporcionada por una IA, la cual puede no ser completamente precisa. Ante cualquier duda, consulte a un veterinario.
         """
     )
@@ -359,9 +372,48 @@ if st.button(button_text):
     st.write("El siguiente prompt se enviará a Gemini:")
     st.code(prompt)
     
+    # Enviar el prompt a Gemini y obtener la respuesta
     respuesta = send_prompt_to_gemini(prompt)
     if language == "English":
         st.subheader("AI Response:")
     else:
         st.subheader("Respuesta de la IA:")
     st.write(respuesta)
+    
+    # Recopilar los datos para guardar en la base de datos CSV
+    data = {
+        "timestamp": datetime.now().isoformat(),
+        "language": language,
+        "owner_country": owner_country,
+        "owner_name": owner_name,
+        "owner_contact": owner_contact,
+        "owner_email": owner_email,
+        "tipo_animal": tipo_animal,
+        "comida": comida,
+        "eliminacion": eliminacion,
+        "edad": edad,
+        "acicala": acicala,
+        "diarrhea_vomiting": diarrhea_vomiting,
+        "video_uri": video_uri if video_uri is not None else "",
+        "prompt": prompt,
+        "ai_response": respuesta
+    }
+    # Agregar campos adicionales según el tipo de animal
+    if tipo_animal in ["Cat", "Gato"]:
+        data["grooming_regular"] = grooming_regular
+        data["cambios_grooming"] = cambios_grooming
+        data["comportamiento_cambio"] = comportamiento_cambio
+        data["sociable"] = sociable
+        data["ocultarse"] = ocultarse
+        data["reacio"] = reacio
+        data["imagen_estado"] = imagen_estado_gato
+    else:
+        data["aseo_regular"] = aseo_regular
+        data["cambios_aseo"] = cambios_aseo
+        data["comportamiento_cambio"] = comportamiento_cambio
+        data["sociable"] = sociable
+        data["ocultarse"] = ocultarse
+        data["reacio"] = reacio
+
+    # Guardar los datos en el archivo CSV
+    save_response_to_csv(data)
