@@ -108,7 +108,7 @@ def save_response_to_csv(data):
 language = st.radio("Select Language / Seleccione el idioma:", options=["Español", "English"])
 
 if language == "English":
-    st.title("Initial Health Evaluation of Pets")
+    st.title("Preventive pet health assessment")
     st.markdown(
         """
         **Welcome!**  
