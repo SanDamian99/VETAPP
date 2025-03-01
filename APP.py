@@ -20,8 +20,8 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # =================== Configuración de la API de Gemini ===================
 
 api_keys = [
-    "AIzaSyC5oc1_9Zp0xb37z2u7M1v3ov4Js1DyUSk",
-    "AIzaSyAEaxnxgoMXwg9YVRmRH_tKVGD3pNgHKkk"
+    st.secrets["gemini"]["key1"],
+    st.secrets["gemini"]["key2"]
 ]
 
 current_api_key_index = 0
