@@ -36,7 +36,7 @@ generation_config = {
     "temperature": 0.4,
     "top_p": 0.8,
     "top_k": 32,
-    "max_output_tokens": 50,
+    "max_output_tokens": 8000,
 }
 
 safety_settings = [
