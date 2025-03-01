@@ -3,12 +3,19 @@ import os
 import re
 import time
 import tempfile
-import csv
+import csv 
 from datetime import datetime
 import google.generativeai as genai
 from requests.exceptions import ConnectionError
 from urllib3.exceptions import ProtocolError
 from google.api_core.exceptions import TooManyRequests
+from supabase import create_client, Client
+
+# =================== Inicialización de Supabase ===================
+# Se obtienen las credenciales desde st.secrets
+SUPABASE_URL = st.secrets["supabase"]["url"]
+SUPABASE_KEY = st.secrets["supabase"]["key"]
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # =================== Configuración de la API de Gemini ===================
 
@@ -67,7 +74,6 @@ def send_prompt_to_gemini(prompt):
             return "Error al procesar la solicitud."
 
 # ============ Funciones para subir el video a Gemini ============
-
 def upload_to_gemini(path, mime_type=None):
     """
     Sube el archivo dado a Gemini y retorna el objeto de archivo.
@@ -90,17 +96,10 @@ def wait_for_files_active(files):
                 raise Exception(f"El archivo {file.name} falló al procesarse")
     st.success("El archivo ya está activo.")
 
-# ============ Función para guardar la respuesta en un archivo CSV ============
-CSV_FILE = "responses.csv"
-
-def save_response_to_csv(data):
-    file_exists = os.path.exists(CSV_FILE)
-    with open(CSV_FILE, mode='a', newline='', encoding='utf-8') as csvfile:
-        fieldnames = list(data.keys())
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        if not file_exists:
-            writer.writeheader()
-        writer.writerow(data)
+# ============ Función para guardar la respuesta en Supabase ============
+def save_response_to_supabase(data):
+    response = supabase.table("responses").insert(data).execute()
+    return response
 
 # =================== Inicio de la aplicación Streamlit ===================
 
@@ -249,7 +248,7 @@ else:
         aseo_regular = st.radio("¿El perro se limpia o se lame regularmente?", options=["Sí", "No"])
         cambios_aseo = st.radio("¿Ha habido algún cambio en sus hábitos de aseo?", options=["Sí", "No"])
         comportamiento_cambio = st.radio("¿Ha cambiado recientemente el comportamiento del perro?", options=["Sí", "No"])
-        sociable = st.radio("¿El perro es sociable o muestra timidez/agresividad?", options=["Sociable", "Tímido/Agresivo"])
+        sociable = st.radio("¿El perro es sociable o muestra timidez/agresividad?", options=["Sí", "No"])
         ocultarse = st.radio("¿El perro se esconde o evita interactuar?", options=["Sí", "No"])
         reacio = st.radio("¿El perro se muestra reacio a salir incluso para interactuar con su dueño o recibir su comida?", options=["Sí", "No"])
     
@@ -380,7 +379,7 @@ if st.button(button_text):
         st.subheader("Respuesta de la IA:")
     st.write(respuesta)
     
-    # Recopilar los datos para guardar en la base de datos CSV
+    # Recopilar los datos para guardar en la base de datos Supabase
     data = {
         "timestamp": datetime.now().isoformat(),
         "language": language,
@@ -415,5 +414,7 @@ if st.button(button_text):
         data["ocultarse"] = ocultarse
         data["reacio"] = reacio
 
-    # Guardar los datos en el archivo CSV
-    save_response_to_csv(data)
+    # Guardar los datos en Supabase en lugar de un CSV
+    response = save_response_to_supabase(data)
+    st.write("Consulta guardada en la base de datos Supabase:", response)
+
