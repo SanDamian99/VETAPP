@@ -175,8 +175,8 @@ if language == "English":
         )
     else:
         st.subheader("Additional Questions for Dogs")
-        aseo_regular = st.radio("Does the dog clean or lick itself regularly?", options=["Yes", "No"])
-        cambios_aseo = st.radio("Have there been any changes in its grooming habits?", options=["Yes", "No"])
+        aseo_regular = ""
+        cambios_aseo = st.radio("Is your dog scratching more than usual?", options=["Yes", "No"])
         comportamiento_cambio = st.radio("Has the dog's behavior changed recently?", options=["Yes", "No"])
         sociable = st.radio("Is the dog sociable or does it show shyness/aggressiveness?", options=["Sociable", "Shy/Aggressive"])
         ocultarse = st.radio("Does the dog hide or avoid interaction?", options=["Yes", "No"])
@@ -249,8 +249,8 @@ else:
         )
     else:
         st.subheader("Preguntas adicionales para perros")
-        aseo_regular = st.radio("¿El perro se limpia o se lame regularmente?", options=["Sí", "No"])
-        cambios_aseo = st.radio("¿Ha habido algún cambio en sus hábitos de aseo?", options=["Sí", "No"])
+        aseo_regular = ""
+        cambios_aseo = st.radio("¿Se rasca más de lo común?", options=["Sí", "No"])
         comportamiento_cambio = st.radio("¿Ha cambiado recientemente el comportamiento del perro?", options=["Sí", "No"])
         sociable = st.radio("¿El perro es sociable o muestra timidez/agresividad?", options=["Sí", "No"])
         ocultarse = st.radio("¿El perro se esconde o evita interactuar?", options=["Sí", "No"])
