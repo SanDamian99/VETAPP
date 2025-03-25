@@ -103,8 +103,8 @@ def save_response_to_supabase(data):
 
 # =================== Inicio de la aplicación Streamlit ===================
 # Mostrar logo
-st.logo("logo.png")
-st.image("logo.png", caption="PetScan", width=200)
+st.logo("Logo.png")
+st.image("Logo.png", caption="PetScan", width=200)
 
 
 # Selección del idioma al inicio
